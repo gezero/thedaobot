@@ -41,6 +41,15 @@ end
 
 
 r = RedditApi.new secret
+r.authorize!
+
+
+messages = r.get_new_messages
+
+messages.each do |m|
+    puts m.body
+end
+
 d = DAOApi.new secret
 account = "0x33d9b12b3b05927a1a00d5896017c5ff4967fca9"
 puts d.account_details(account)['result']

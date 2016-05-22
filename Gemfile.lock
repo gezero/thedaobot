@@ -35,7 +35,7 @@ PLATFORMS
 
 DEPENDENCIES
   oj
-  redd (~> 0.7.0)
+  redd (~> 0.7.8)
   rest-client (~> 1.8.0)
 
 BUNDLED WITH
