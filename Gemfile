@@ -4,6 +4,7 @@ source "https://rubygems.org"
 
 gem "redd", "~> 0.7.8"
 gem "rest-client", "~> 1.8.0"
+gem 'ecdsa'
 
 # Optional fast JSON parser.
 gem "oj", platforms: :ruby
