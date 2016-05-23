@@ -2,6 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     addressable (2.4.0)
+    digest-sha3 (1.1.0)
     domain_name (0.5.20160310)
       unf (>= 0.0.5, < 1.0.0)
     ecdsa (1.2.0)
@@ -43,6 +44,7 @@ PLATFORMS
   x86-mingw32
 
 DEPENDENCIES
+  digest-sha3
   ecdsa
   oj
   redd (~> 0.7.8)
