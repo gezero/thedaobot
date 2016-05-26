@@ -1,3 +1,4 @@
+#Please do not run this application on any machine that has access to your crypto...
 require 'openssl'
 OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 
@@ -9,8 +10,6 @@ require 'digest'
 require 'digest/sha3'
 
 secret = YAML.load_file(ARGV[0])
-
-r=nil
 
 class RedditApi
     def initialize secret
@@ -74,19 +73,35 @@ def step secret
     messages = r.get_new_messages
 
     messages.each do |m|
-        #puts m.body
-        message_hash="d030d9a04df643f62a1502b017f51c41a659268091abbd20e2de97b935724d7c"
-        signature = "0xf4dffb108315560563e30657c1a5d7942f54bf321593797f08f84ff0601643e2683eb468ddd5f5d9c5bea00a9661beb6e042d335706763957f40f81d790e7aa301"
 
-        keys = extract_account_from_signature signature, message_hash
+        author = m.author
+        body = m.body
 
-        total = 0
-        keys.each do |k|
-            d = DAOApi.new secret
-            total += d.account_details(k)['result'].to_i
+        message_hash = Digest::SHA3.new(256).hexdigest(author)
+        puts "message_hash = #{message_hash}"
+
+
+        match = /Signature 0?x?(\p{XDigit}*)/.match(body)
+
+        signature = match[1] if match
+
+        if signature 
+            keys = extract_account_from_signature signature, message_hash
+
+            total = 0
+            keys.each do |k|
+                d = DAOApi.new secret
+                total += d.account_details(k)['result'].to_i
+            end
+
+            puts "total = #{total}"
+
+            if total>0
+                m.reply("The signature from #{author} is valid and related DAO account contains #{total}.")
+            end
+
         end
-
-        puts "total = #{total}"
+        m.mark_as_read
     end
 
 end
