@@ -21,7 +21,7 @@ class RedditApi
         @r.authorize!
     end
 
-    def get_new_messages
+    def get_new_messages        
         @r.my_messages
     end
 
@@ -33,28 +33,14 @@ class DAOApi
     end
 
     def account_details account
-        YAML.load RestClient.get("https://api.etherscan.io/api?module=account&action=tokenbalance&tokenname=THEDAO&address=#{account}&apikey=#{@api_key}")
+        link = "https://api.etherscan.io/api?module=account&action=tokenbalance&tokenname=THEDAO&address=#{account}&apikey=#{@api_key}"
+        puts link
+        YAML.load RestClient.get(link)
     end
 
     def account_tokens account
         account_details(account)["result"]
     end
-end
-
-
-def step secret
-    r = RedditApi.new secret
-    r.authorize!
-
-    messages = r.get_new_messages
-
-    messages.each do |m|
-        puts m.body
-    end
-
-    d = DAOApi.new secret
-    account = "0x33d9b12b3b05927a1a00d5896017c5ff4967fca9"
-    puts d.account_details(account)['result']
 end
 
 
@@ -80,7 +66,30 @@ def extract_account_from_signature signature, message_hash
     return keys
 end
 
-message_hash="d030d9a04df643f62a1502b017f51c41a659268091abbd20e2de97b935724d7c"
-keys = extract_account_from_signature "0xf4dffb108315560563e30657c1a5d7942f54bf321593797f08f84ff0601643e2683eb468ddd5f5d9c5bea00a9661beb6e042d335706763957f40f81d790e7aa301", message_hash
 
-puts keys
+def step secret
+    r = RedditApi.new secret
+    r.authorize!
+
+    messages = r.get_new_messages
+
+    messages.each do |m|
+        #puts m.body
+        message_hash="d030d9a04df643f62a1502b017f51c41a659268091abbd20e2de97b935724d7c"
+        signature = "0xf4dffb108315560563e30657c1a5d7942f54bf321593797f08f84ff0601643e2683eb468ddd5f5d9c5bea00a9661beb6e042d335706763957f40f81d790e7aa301"
+
+        keys = extract_account_from_signature signature, message_hash
+
+        total = 0
+        keys.each do |k|
+            d = DAOApi.new secret
+            total += d.account_details(k)['result'].to_i
+        end
+
+        puts "total = #{total}"
+    end
+
+end
+
+
+step secret
