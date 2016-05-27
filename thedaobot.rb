@@ -13,7 +13,7 @@ secret = YAML.load_file(ARGV[0])
 
 class RedditApi
     def initialize secret
-        @r = Redd.it(:script, secret['id'],secret['secret'],secret['username'],secret['password'], user_agent: "thedaobot v0.0.1")
+        @r = Redd.it(:script, secret['id'],secret['secret'],secret['username'],secret['password'], {user_agent: "thedaobot v0.0.1",rate_limit: Redd::RateLimit.new(10)})
     end
 
     def authorize!
@@ -79,9 +79,8 @@ class DaoBot
         @r.authorize!
     end
 
-    def step 
-        puts "fetching new messages..."
-        @r.get_new_messages.each do |m|
+    def step  
+        @r.get_new_messages .each do |m|
             sleep 2
 
             next if m.read?
@@ -109,13 +108,20 @@ class DaoBot
                 puts "total = #{total}"
 
                 if total>0
-                    m.reply("The signature from #{author} is valid and related DAO account contains #{total}.\n\n I am a bot. [Report problem](https://www.reddit.com/r/thedaobot/) or [use me](https://www.reddit.com/r/thedaobot/wiki/thedaobot/usage).")
+                    m.reply("The signature from #{author} is valid and related DAO account contains #{total} DAO tokens.\n\n I am a bot. [Report problem](https://www.reddit.com/r/thedaobot/) or [use me](https://www.reddit.com/r/thedaobot/wiki/thedaobot/usage).")
                 end
 
             end
-            m.mark_as_read
+            m.mark_as_read            
         end
+    end
 
+    def start_looping
+        loop do
+            sleep 10
+            puts "Going for next step..."
+            step
+        end
     end
 
 end
@@ -127,4 +133,4 @@ bot = DaoBot.new secret
 
 bot.authorize!
 
-bot.step
+bot.start_looping
