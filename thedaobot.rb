@@ -73,6 +73,8 @@ class DaoBot
         end
 
         return keys
+    rescue 
+        return []        
     end
 
     def authorize!
@@ -118,7 +120,7 @@ class DaoBot
 
     def start_looping
         loop do
-            sleep 10
+            sleep 1
             puts "Going for next step..."
             step
         end
