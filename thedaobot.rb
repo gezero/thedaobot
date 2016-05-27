@@ -20,8 +20,8 @@ class RedditApi
         @r.authorize!
     end
 
-    def get_new_messages        
-        @r.my_messages
+    def get_new_messages
+        @r.my_messages('unread')
     end
 
 end
@@ -43,7 +43,7 @@ class DAOApi
 end
 
 
-def extract_account_from_signature signature, message_hash
+def extract_keys_from_signature signature, message_hash
     r = signature.slice(0, 66)
     s = '0x' + signature.slice(66, 64)
     v = '0x' + signature.slice(130, 2)
@@ -53,9 +53,13 @@ def extract_account_from_signature signature, message_hash
     group = ECDSA::Group::Secp256k1
     sign = ECDSA::Signature.new r.to_i(16),s.to_i(16)
 
+    #puts "s: #{signature} m_h:#{message_hash}"
+    #puts "r: #{r} s:#{s} v:#{v}"
+
     keys =[]
     ECDSA::recover_public_key(group,[message_hash].pack('H*'), sign) do |k|
         if k!= nil
+            puts k
             pub = k.x.to_s(16)+k.y.to_s(16)
             pub_b =[pub].pack('H*')
             keys << (Digest::SHA3.new(256).hexdigest(pub_b))[-40..-1]
@@ -68,36 +72,41 @@ end
 
 def step secret
     r = RedditApi.new secret
+    d = DAOApi.new secret
+
     r.authorize!
 
     messages = r.get_new_messages
 
     messages.each do |m|
+        sleep 2
+
+        next if m.read?
 
         author = m.author
         body = m.body
 
         message_hash = Digest::SHA3.new(256).hexdigest(author)
-        puts "message_hash = #{message_hash}"
 
-
-        match = /Signature 0?x?(\p{XDigit}*)/.match(body)
+        match = /Signature: (0x\p{XDigit}*)/.match(body)
 
         signature = match[1] if match
+        puts "User: #{author} message_hash = #{message_hash} signature=#{signature}"
 
-        if signature 
-            keys = extract_account_from_signature signature, message_hash
+        if signature
+            keys = extract_keys_from_signature signature, message_hash
 
             total = 0
             keys.each do |k|
-                d = DAOApi.new secret
-                total += d.account_details(k)['result'].to_i
+                amount = d.account_details(k)['result'].to_i
+                puts "key: #{k} amount:#{amount}"
+                total += amount
             end
 
             puts "total = #{total}"
 
             if total>0
-                m.reply("The signature from #{author} is valid and related DAO account contains #{total}.")
+                m.reply("The signature from #{author} is valid and related DAO account contains #{total}.\n\n I am a bot. [Report problem](https://www.reddit.com/r/thedaobot/) or [use me](https://www.reddit.com/r/thedaobot/wiki/thedaobot/usage).")
             end
 
         end
