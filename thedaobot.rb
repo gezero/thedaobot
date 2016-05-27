@@ -100,17 +100,19 @@ class DaoBot
             if signature
                 keys = extract_keys_from_signature signature, message_hash
 
+                key = nil
                 total = 0
                 keys.each do |k|
-                    amount = @d.account_details(k)['result'].to_i
+                    amount = @d.account_details(k)['result'].to_i / (10**16)
                     puts "key: #{k} amount:#{amount}"
+                    key = k if amount >0
                     total += amount
                 end
 
                 puts "total = #{total}"
 
                 if total>0
-                    m.reply("The signature from #{author} is valid and related DAO account contains #{total} DAO tokens.\n\n I am a bot. [Report problem](https://www.reddit.com/r/thedaobot/) or [use me](https://www.reddit.com/r/thedaobot/wiki/thedaobot/usage).")
+                    m.reply("The signature from #{author} is valid and related DAO account contains #{total} DAO tokens.\n\n You can check the current balance for instance [here](http://etherscan.io/token/TheDAO?a=0x#{key}#balances) \n\n I am a bot. [Report problem](https://www.reddit.com/r/thedaobot/) or [use me](https://www.reddit.com/r/thedaobot/wiki/thedaobot/usage).")
                 end
 
             end
@@ -120,7 +122,8 @@ class DaoBot
 
     def start_looping
         loop do
-            sleep 1
+            sleep 30
+            authorize!
             puts "Going for next step..."
             step
         end
